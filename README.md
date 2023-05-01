@@ -23,7 +23,7 @@ As a bonus, this userscript can be used to obtain trading cards easily when avai
 
 ## Installation
 
-1. [Install](https://github.com/RatserX/steam-discovery-queue-explorer/raw/master/sdqe.user.js) the userscript.
+1. [Install](https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js) the userscript.
 2. Head to [Your Discovery Queue](https://store.steampowered.com/explore/#) page.
 3. Click on the `Explore your queue` button.
 

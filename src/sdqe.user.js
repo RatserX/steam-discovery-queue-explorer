@@ -8,9 +8,9 @@
 // @match        https://store.steampowered.com/explore*
 // @name         Steam Discovery Queue Explorer
 // @namespace    https://github.com/RatserX/steam-discovery-queue-explorer
-// @downloadURL  https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/sdqe.user.js
-// @updateURL    https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/sdqe.user.js
-// @version      0.1
+// @downloadURL  https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
+// @updateURL    https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
+// @version      0.2
 // ==/UserScript==
 
 const settings = {};
