@@ -1,0 +1,27 @@
+{
+  "name": "steam-discovery-queue-explorer",
+  "version": "1.0.0",
+  "description": "Userscript that improves the overall experience of exploring the Steam Discovery Queue.",
+  "main": "sdqe.user.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cleanup": "npm run lint && npm run format",
+    "format": "prettier --write ./**/*.{cjs,js}",
+    "lint": "eslint ./**/*.{cjs,js} --fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RatserX/steam-discovery-queue-explorer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RatserX/steam-discovery-queue-explorer/issues"
+  },
+  "homepage": "https://github.com/RatserX/steam-discovery-queue-explorer#readme",
+  "devDependencies": {
+    "eslint": "^8.39.0",
+    "eslint-plugin-userscripts": "^0.2.12",
+    "prettier": "2.8.8"
+  }
+}
