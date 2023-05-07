@@ -10,7 +10,7 @@
 // @namespace    https://github.com/RatserX/steam-discovery-queue-explorer
 // @downloadURL  https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
 // @updateURL    https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
-// @version      0.3
+// @version      0.4
 // ==/UserScript==
 
 const settings = {};
@@ -47,22 +47,22 @@ class App {
   createConnection = () => {
     this.#connection = new Connection(this.#state, this.#web);
     return this.#connection;
-  }
+  };
 
   createLocalization = () => {
     this.#localization = new Localization();
     return this.#localization;
-  }
+  };
 
   createState = () => {
     this.#state = new State();
     return this.#state;
-  }
+  };
 
   createWeb = () => {
     this.#web = new Web(this.#connection, this.#localization, this.#state);
     return this.#web;
-  }
+  };
 }
 
 class Connection {
@@ -75,12 +75,12 @@ class Connection {
   constructor(state, web) {
     this.#state = state;
     this.#web = web;
-  };
+  }
 
   app = (gameId) => {
     let willRetry = false;
     const input = Helper.Host.base('/app/10');
-  
+
     fetch(input, {
       body: Helper.Host.serialize({
         appid_to_clear_from_queue: gameId,
@@ -95,14 +95,14 @@ class Connection {
       .then((_) => {
         let gameIndex = this.#state.get('gameIndex');
         let queueId = this.#state.get('queueId');
-  
+
         const gameCount = this.#state.get('gameCount');
         const gameLength = this.#state.get('gameLength');
         const activityProgressValue = ((gameIndex + 1) * 100) / gameLength;
 
         this.#state.set('activityProgressValue', activityProgressValue);
         this.#state.set('gameCount', gameCount + 1);
-  
+
         if (++gameIndex < gameLength) {
           this.#state.set('gameCount', gameIndex);
         } else {
@@ -117,13 +117,13 @@ class Connection {
       })
       .finally(() => {
         let appRetry = this.#state.get(`appRetry${gameId}`);
-  
+
         if (willRetry && ++appRetry <= settings.app.retryMax) {
           this.#state.set(`appRetry${gameId}`, appRetry);
           this.app(gameId);
         }
       });
-  }
+  };
 
   explore = () => {
     let willRetry = false;
@@ -143,9 +143,9 @@ class Connection {
       .then((response) => response.json())
       .then((data) => {
         if (
-          data.hasOwnProperty('queue') &&
-          data.hasOwnProperty('rgAppData') &&
-          data.hasOwnProperty('settings')
+          Object.prototype.hasOwnProperty.call(data, 'queue') &&
+          Object.prototype.hasOwnProperty.call(data, 'rgAppData') &&
+          Object.prototype.hasOwnProperty.call(data, 'settings')
         ) {
           const gameLength = data.queue.length;
           const queueId = this.#state.get('queueIndex');
@@ -185,14 +185,16 @@ class Connection {
           this.explore();
         }
       });
-  }
+  };
 }
 
 class Helper {
   static Element = class {
     static dispatchEvent = (type, value, name = null) => {
       const parsedType = name ? `${type}_${name}` : type;
-      const selectors = name ? `[data-event-${type}-name="${name}"]` : `[data-event-${type}-listener]`;
+      const selectors = name
+        ? `[data-event-${type}-name="${name}"]`
+        : `[data-event-${type}-listener]`;
 
       const event = new CustomEvent(parsedType, { detail: value });
       const nodes = document.querySelectorAll(selectors);
@@ -218,23 +220,23 @@ class Helper {
       const protocol = window.location.protocol;
       return `${protocol}//${hostname}${url}`;
     };
-    
+
     static query = (url, name) => {
       const separatedUrls = url.split('?');
       const init = separatedUrls[1];
       const searchParameters = new URLSearchParams(init);
       return searchParameters.get(name);
     };
-    
+
     static serialize = (init) => {
       const searchParameters = new URLSearchParams(init);
       return searchParameters.toString();
     };
   };
-};
+}
 
 class Localization {
-  #language = "english";
+  #language = 'english';
   #resource = {
     english: {
       exploreGame: 'Games explored',
@@ -247,26 +249,26 @@ class Localization {
       exploreQueueProduct: 'Explora los productos en tu lista.',
     },
   };
-  
+
   format = (key) => this.#resource[this.#language][key];
   use = (selectedLanguage) => {
     const languages = Object.keys(this.#resource);
     const isLanguage = languages.includes(selectedLanguage);
     this.#language = isLanguage ? selectedLanguage : this.#language;
   };
-};
+}
 
 class State {
   #storage = {};
-  
+
   get = (name) => this.#storage[name];
   set = (name, value) => {
     const currentValue = this.get(name);
     if (currentValue !== value) {
       this.#storage[name] = value;
-      Helper.Element.dispatchEvent("state", value, name);
+      Helper.Element.dispatchEvent('state', value, name);
     }
-  }
+  };
 }
 
 class Web {
@@ -294,14 +296,16 @@ class Web {
       dataEventAttributes.push(attribute);
       dataEventTypes.push(type);
     });
-    
-    return `data-event="${dataEventTypes.join(",")}" ${dataEventAttributes.join(" ")}"`;
+
+    return `data-event="${dataEventTypes.join(',')}" ${dataEventAttributes.join(
+      ' '
+    )}"`;
   };
-  
+
   #registerEvents = (id, listenerObject) => {
     document.querySelectorAll(`#${id} [data-event]`).forEach((node) => {
-      const event = node.getAttribute("data-event");
-      const types = event.split(",");
+      const event = node.getAttribute('data-event');
+      const types = event.split(',');
 
       types.forEach((type) => {
         const listener = node.getAttribute(`data-event-${type}-listener`);
@@ -320,10 +324,10 @@ class Web {
     this.#connection = connection;
     this.#localization = localization;
     this.#state = state;
-  };
-  
+  }
+
   action = (props = {}) => {
-    props.id = props.id ?? "sqde-action";
+    props.id = props.id ?? 'sqde-action';
 
     const listenerObject = {
       handleActionClick: () => {
@@ -336,23 +340,33 @@ class Web {
 
         this.activity();
         this.#connection.explore();
-      }
+      },
     };
 
     const text = `
 <div id="${props.id}" class="discovery_queue_customize_ctn">
-  <div class="btnv6_blue_hoverfade btn_medium" ${this.#generateEvents(['click', 'handleActionClick'])}>
+  <div class="btnv6_blue_hoverfade btn_medium" ${this.#generateEvents([
+    'click',
+    'handleActionClick',
+  ])}>
     <span>${this.#localization.format('exploreQueue')}</span>
   </div>
   <span> ${this.#localization.format('exploreQueueProduct')} </span>
 </div>`;
 
-    Helper.Element.insertAdjacentHTML(text, '.discovery_queue_customize_ctn', 'beforebegin');
+    Helper.Element.insertAdjacentHTML(
+      text,
+      '.discovery_queue_customize_ctn',
+      'beforebegin'
+    );
     this.#registerEvents(props.id, listenerObject);
   };
 
   activity = (props = {}) => {
-    props.id = props.id ?? "sqde-activity";
+    props.id = props.id ?? 'sqde-activity';
+
+    const activityProgressValue = this.#state.get('activityProgressValue');
+    const gameCount = this.#state.get('gameCount');
 
     const listenerObject = {
       handleActivityProgressValueState: (event) => {
@@ -375,22 +389,41 @@ class Web {
         const key = 'isMaximized';
         const isMaximized = this.#state.get(key);
         this.#state.set(key, !isMaximized);
-      }
+      },
     };
 
     const text = `
 <div id="${props.id}">
-  <div id="sqde-activity-status" ${this.#generateEvents(['state', 'handleIsMaximizedState', 'isMaximized'])}>
+  <div id="sqde-activity-status" ${this.#generateEvents([
+    'state',
+    'handleIsMaximizedState',
+    'isMaximized',
+  ])}>
     <div class="info">
-      <span>${this.#localization.format('exploreGame')}: <span ${this.#generateEvents(['state', 'handleGameCountState', 'gameCount'])}>${gameCount}</span></span>
+      <span>${this.#localization.format(
+        'exploreGame'
+      )}: <span ${this.#generateEvents([
+      'state',
+      'handleGameCountState',
+      'gameCount',
+    ])}>${gameCount}</span></span>
     </div>
-    <a class="resize" href="#" title="Resize" ${this.#generateEvents(['click', 'handleResizeClick'])}>
+    <a class="resize" href="#" title="Resize" ${this.#generateEvents([
+      'click',
+      'handleResizeClick',
+    ])}>
       <div class="expander">&nbsp;</div>
     </a>
   </div>
-  <div id="sqde-activity-content" ${this.#generateEvents(['state', 'handleIsMaximizedState', 'isMaximized'])}></div>
+  <div id="sqde-activity-content" ${this.#generateEvents([
+    'state',
+    'handleIsMaximizedState',
+    'isMaximized',
+  ])}></div>
   <div id="sqde-activity-progress">
-    <div class="value" style="width: ${activityProgressValue}%" ${this.#generateEvents(['state', 'handleActivityProgressValueState', 'activityProgressValue'])}></div>
+    <div class="value" style="width: ${activityProgressValue}%" ${this.#generateEvents(
+      ['state', 'handleActivityProgressValueState', 'activityProgressValue']
+    )}></div>
   </div>
 </div>`;
 
@@ -399,7 +432,7 @@ class Web {
   };
 
   game = (props = {}) => {
-    props.id = props.id ?? "sqde-game";
+    props.id = props.id ?? 'sqde-game';
 
     const platform = {
       linux: props.os_linux ? '<span class="platform_img linux"></span>' : '',
@@ -417,11 +450,15 @@ class Web {
   <div class="cost">${props.discountBlock}</div>
 </a>`;
 
-    Helper.Element.insertAdjacentHTML(text, '#sqde-activity-content', 'beforeend');
+    Helper.Element.insertAdjacentHTML(
+      text,
+      '#sqde-activity-content',
+      'beforeend'
+    );
   };
 
   style = (props = {}) => {
-    props.id = props.id ?? "sqde-style";
+    props.id = props.id ?? 'sqde-style';
 
     const text = `
 <style id="${props.id}" type="text/css">
@@ -460,11 +497,11 @@ class Web {
 
     Helper.Element.insertAdjacentHTML(text, 'head', 'beforeend');
   };
-};
+}
 
 (() => {
   const app = new App();
-  
+
   const localization = app.createLocalization();
   const web = app.createWeb();
 
