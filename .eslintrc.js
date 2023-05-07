@@ -4,19 +4,19 @@ module.exports = {
     es2021: true,
     node: true,
   },
-  extends: 'eslint:recommended',
+  extends: "eslint:recommended",
   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
+    ecmaVersion: "latest",
+    sourceType: "module",
   },
   rules: {
-    semi: ['error', 'always'],
-    quotes: ['error', 'double'],
-    'no-undef': 'warn',
-    'no-unused-vars': [
-      'error',
+    semi: ["error", "always"],
+    quotes: ["error", "double"],
+    "no-undef": "warn",
+    "no-unused-vars": [
+      "error",
       {
-        argsIgnorePattern: '^_',
+        argsIgnorePattern: "^_",
       },
     ],
   },

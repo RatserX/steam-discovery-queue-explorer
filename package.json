@@ -5,7 +5,7 @@
   "main": "sdqe.user.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "uglifyjs --comments all --compress --mangle --output dist/sdqe.user.js --verbose -- src/sdqe.user.js",
+    "build": "terser --comments all --compress --mangle --output dist/sdqe.user.js --verbose -- src/sdqe.user.js",
     "cleanup": "npm run lint && npm run format",
     "format": "prettier --write ./**/*.{cjs,js}",
     "lint": "eslint ./**/*.{cjs,js} --fix"
@@ -26,6 +26,6 @@
     "prettier": "2.8.8"
   },
   "dependencies": {
-    "uglify-js": "^3.17.4"
+    "terser": "^5.17.1"
   }
 }
