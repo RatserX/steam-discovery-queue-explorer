@@ -10,7 +10,7 @@
 // @namespace    https://github.com/RatserX/steam-discovery-queue-explorer
 // @downloadURL  https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
 // @updateURL    https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
-// @version      0.5
+// @version      0.6
 // ==/UserScript==
 
 const settings = {};
@@ -41,80 +41,86 @@ class Connection {
 
   app = (gameId) => {
     const input = Helper.Host.base('/app/10');
-    let rejectReason = null;
-    let willRetry = false;
+    const promise = () =>
+      new Promise((resolve, reject) => {
+        let rejectReason = null;
+        let willRetry = false;
 
-    return new Promise((resolve, reject) => {
-      fetch(input, {
-        body: Helper.Host.serialize({
-          appid_to_clear_from_queue: gameId,
-          sessionid: g_sessionID,
-        }),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;boundary=;charset=utf-8',
-        },
-        method: 'POST',
-      })
-        .then((response) => resolve(response))
-        .catch((reason) => {
-          rejectReason = reason;
-          willRetry = settings.app.retryOnFailedRequest;
+        fetch(input, {
+          body: Helper.Host.serialize({
+            appid_to_clear_from_queue: gameId,
+            sessionid: g_sessionID,
+          }),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;boundary=;charset=utf-8',
+          },
+          method: 'POST',
         })
-        .finally(() => {
-          let appRetry = this.#state.get(`appRetry${gameId}`);
-          if (willRetry && ++appRetry <= settings.app.retryMax) {
-            this.#state.set(`appRetry${gameId}`, appRetry);
-            this.app(gameId);
-          } else {
-            reject(rejectReason);
-          }
-        });
-    });
+          .then((response) => resolve(response))
+          .catch((reason) => {
+            rejectReason = reason;
+            willRetry = settings.app.retryOnFailedRequest;
+          })
+          .finally(() => {
+            let appRetry = this.#state.get(`appRetry${gameId}`);
+            if (willRetry && ++appRetry <= settings.app.retryMax) {
+              this.#state.set(`appRetry${gameId}`, appRetry);
+              promise().then(resolve).catch(reject);
+            } else {
+              reject(rejectReason);
+            }
+          });
+      });
+
+    return promise();
   };
 
   explore = () => {
     const input = Helper.Host.base('/explore/generatenewdiscoveryqueue');
-    let rejectReason = null;
-    let willRetry = false;
+    const promise = () =>
+      new Promise((resolve, reject) => {
+        let rejectReason = null;
+        let willRetry = false;
 
-    return new Promise((resolve, reject) => {
-      fetch(input, {
-        body: Helper.Host.serialize({
-          queuetype: 0,
-          sessionid: g_sessionID,
-        }),
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;boundary=;charset=utf-8',
-        },
-        method: 'POST',
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (
-            !Object.prototype.hasOwnProperty.call(data, 'queue') ||
-            !Object.prototype.hasOwnProperty.call(data, 'rgAppData') ||
-            !Object.prototype.hasOwnProperty.call(data, 'settings')
-          ) {
-            willRetry = settings.explore.retryOnFailedResponse;
-            return;
-          }
+        fetch(input, {
+          body: Helper.Host.serialize({
+            queuetype: 0,
+            sessionid: g_sessionID,
+          }),
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;boundary=;charset=utf-8',
+          },
+          method: 'POST',
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (
+              !Object.prototype.hasOwnProperty.call(data, 'queue') ||
+              !Object.prototype.hasOwnProperty.call(data, 'rgAppData') ||
+              !Object.prototype.hasOwnProperty.call(data, 'settings')
+            ) {
+              willRetry = settings.explore.retryOnFailedResponse;
+              return;
+            }
 
-          resolve(data);
-        })
-        .catch((reason) => {
-          rejectReason = reason;
-          willRetry = settings.explore.retryOnFailedRequest;
-        })
-        .finally(() => {
-          let exploreRetry = this.#state.get('exploreRetry');
-          if (willRetry && ++exploreRetry <= settings.explore.retryMax) {
-            this.#state.set('exploreRetry', exploreRetry);
-            this.explore();
-          } else {
-            reject(rejectReason);
-          }
-        });
-    });
+            resolve(data);
+          })
+          .catch((reason) => {
+            rejectReason = reason;
+            willRetry = settings.explore.retryOnFailedRequest;
+          })
+          .finally(() => {
+            let exploreRetry = this.#state.get('exploreRetry');
+            if (willRetry && ++exploreRetry <= settings.explore.retryMax) {
+              this.#state.set('exploreRetry', exploreRetry);
+              promise().then(resolve).catch(reject);
+            } else {
+              reject(rejectReason);
+            }
+          });
+      });
+
+    return promise();
   };
 }
 
@@ -166,19 +172,20 @@ class Helper {
 class Localization {
   #language = 'english';
   #resource = {
-    english: {
-      exploreGame: 'Games explored',
-      exploreQueue: 'Explore your queue',
-      exploreQueueProduct: 'Explore the products in your queue.',
-    },
     spanish: {
-      exploreGame: 'Juegos explorados',
-      exploreQueue: 'Explora tu lista',
-      exploreQueueProduct: 'Explora los productos en tu lista.',
+      'Games explored': 'Juegos explorados',
+      'Explore your queue': 'Explora tu lista',
+      'Explore the products in your queue': 'Explora los productos en tu lista',
     },
   };
 
-  format = (key) => this.#resource[this.#language][key];
+  format = (key) => {
+    const content = this.#resource[this.#language];
+
+    if (content && key in content) return content[key];
+    return key;
+  };
+
   use = (selectedLanguage) => {
     const languages = Object.keys(this.#resource);
     const isLanguage = languages.includes(selectedLanguage);
@@ -320,9 +327,9 @@ class Web {
     'click',
     'handleActionClick',
   ])}>
-    <span>${this.#localization.format('exploreQueue')}</span>
+    <span>${this.#localization.format('Explore your queue')}</span>
   </div>
-  <span> ${this.#localization.format('exploreQueueProduct')} </span>
+  <span> ${this.#localization.format('Explore the products in your queue')}. </span>
 </div>`;
 
     Helper.Element.insertAdjacentHTML(text, '.discovery_queue_customize_ctn', 'beforebegin');
@@ -367,7 +374,7 @@ class Web {
     'isMaximized',
   ])}>
     <div class="info">
-      <span>${this.#localization.format('exploreGame')}: <span ${this.#generateEvents([
+      <span>${this.#localization.format('Games explored')}: <span ${this.#generateEvents([
       'state',
       'handleGameCountState',
       'gameCount',
