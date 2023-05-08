@@ -1,4 +1,4 @@
 module.exports = {
-  htmlWhitespaceSensitivity: 'ignore',
+  printWidth: 100,
   singleQuote: true,
 };

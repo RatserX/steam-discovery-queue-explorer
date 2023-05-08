@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup --config",
-    "build2": "terser --comments all --compress --mangle --output dist/sdqe.user.js --verbose -- src/sdqe.user.js",
     "cleanup": "npm run lint && npm run format",
     "format": "prettier --write ./**/*.{cjs,js}",
     "lint": "eslint ./**/*.{cjs,js} --fix"

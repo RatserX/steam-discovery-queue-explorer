@@ -51,8 +51,7 @@ class Connection {
           sessionid: g_sessionID,
         }),
         headers: {
-          'Content-Type':
-            'application/x-www-form-urlencoded;boundary=;charset=utf-8',
+          'Content-Type': 'application/x-www-form-urlencoded;boundary=;charset=utf-8',
         },
         method: 'POST',
       })
@@ -85,8 +84,7 @@ class Connection {
           sessionid: g_sessionID,
         }),
         headers: {
-          'Content-Type':
-            'application/x-www-form-urlencoded;boundary=;charset=utf-8',
+          'Content-Type': 'application/x-www-form-urlencoded;boundary=;charset=utf-8',
         },
         method: 'POST',
       })
@@ -140,9 +138,7 @@ class Helper {
     };
 
     static removeContent = (selectors) => {
-      document
-        .querySelectorAll(selectors)
-        .forEach((node) => node.parentNode.removeChild(node));
+      document.querySelectorAll(selectors).forEach((node) => node.parentNode.removeChild(node));
     };
   };
 
@@ -229,9 +225,7 @@ class Web {
       dataEventTypes.push(type);
     });
 
-    return `data-event="${dataEventTypes.join(',')}" ${dataEventAttributes.join(
-      ' '
-    )}"`;
+    return `data-event="${dataEventTypes.join(',')}" ${dataEventAttributes.join(' ')}"`;
   };
 
   #registerEvents = (id, listenerObject) => {
@@ -331,11 +325,7 @@ class Web {
   <span> ${this.#localization.format('exploreQueueProduct')} </span>
 </div>`;
 
-    Helper.Element.insertAdjacentHTML(
-      text,
-      '.discovery_queue_customize_ctn',
-      'beforebegin'
-    );
+    Helper.Element.insertAdjacentHTML(text, '.discovery_queue_customize_ctn', 'beforebegin');
     this.#registerEvents(props.id, listenerObject);
   };
 
@@ -377,9 +367,7 @@ class Web {
     'isMaximized',
   ])}>
     <div class="info">
-      <span>${this.#localization.format(
-        'exploreGame'
-      )}: <span ${this.#generateEvents([
+      <span>${this.#localization.format('exploreGame')}: <span ${this.#generateEvents([
       'state',
       'handleGameCountState',
       'gameCount',
@@ -398,9 +386,11 @@ class Web {
     'isMaximized',
   ])}></div>
   <div id="sqde-activity-progress">
-    <div class="value" style="width: ${activityProgressValue}%" ${this.#generateEvents(
-      ['state', 'handleActivityProgressValueState', 'activityProgressValue']
-    )}></div>
+    <div class="value" style="width: ${activityProgressValue}%" ${this.#generateEvents([
+      'state',
+      'handleActivityProgressValueState',
+      'activityProgressValue',
+    ])}></div>
   </div>
 </div>`;
 
@@ -427,11 +417,7 @@ class Web {
   <div class="cost">${props.discountBlock}</div>
 </a>`;
 
-    Helper.Element.insertAdjacentHTML(
-      text,
-      '#sqde-activity-content',
-      'beforeend'
-    );
+    Helper.Element.insertAdjacentHTML(text, '#sqde-activity-content', 'beforeend');
   };
 
   style = (props = {}) => {
