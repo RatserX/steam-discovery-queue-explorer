@@ -5,7 +5,8 @@
   "main": "sdqe.user.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "terser --comments all --compress --mangle --output dist/sdqe.user.js --verbose -- src/sdqe.user.js",
+    "build": "rollup --config",
+    "build2": "terser --comments all --compress --mangle --output dist/sdqe.user.js --verbose -- src/sdqe.user.js",
     "cleanup": "npm run lint && npm run format",
     "format": "prettier --write ./**/*.{cjs,js}",
     "lint": "eslint ./**/*.{cjs,js} --fix"
@@ -21,11 +22,13 @@
   },
   "homepage": "https://github.com/RatserX/steam-discovery-queue-explorer#readme",
   "devDependencies": {
+    "@babel/preset-env": "^7.21.5",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-terser": "^0.4.1",
     "eslint": "^8.39.0",
     "eslint-plugin-userscripts": "^0.2.12",
-    "prettier": "2.8.8"
+    "prettier": "2.8.8",
+    "rollup": "^3.21.5"
   },
-  "dependencies": {
-    "terser": "^5.17.1"
-  }
+  "type": "module"
 }

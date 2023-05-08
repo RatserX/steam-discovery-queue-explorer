@@ -10,7 +10,7 @@
 // @namespace    https://github.com/RatserX/steam-discovery-queue-explorer
 // @downloadURL  https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
 // @updateURL    https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js
-// @version      0.4
+// @version      0.5
 // ==/UserScript==
 
 const settings = {};
@@ -31,160 +31,92 @@ settings.queue = {
   identifierMax: 1,
 };
 
-class App {
-  /** @type {Connection} */
-  #connection;
-
-  /** @type {Localization} */
-  #localization;
-
-  /** @type {State} */
-  #state;
-
-  /** @type {Web} */
-  #web;
-
-  createConnection = () => {
-    this.#connection = new Connection(this.#state, this.#web);
-    return this.#connection;
-  };
-
-  createLocalization = () => {
-    this.#localization = new Localization();
-    return this.#localization;
-  };
-
-  createState = () => {
-    this.#state = new State();
-    return this.#state;
-  };
-
-  createWeb = () => {
-    this.#web = new Web(this.#connection, this.#localization, this.#state);
-    return this.#web;
-  };
-}
-
 class Connection {
   /** @type {State} */
   #state;
 
-  /** @type {Web} */
-  #web;
-
-  constructor(state, web) {
+  constructor(state) {
     this.#state = state;
-    this.#web = web;
   }
 
   app = (gameId) => {
-    let willRetry = false;
     const input = Helper.Host.base('/app/10');
+    let rejectReason = null;
+    let willRetry = false;
 
-    fetch(input, {
-      body: Helper.Host.serialize({
-        appid_to_clear_from_queue: gameId,
-        sessionid: g_sessionID,
-      }),
-      headers: {
-        'Content-Type':
-          'application/x-www-form-urlencoded;boundary=;charset=utf-8',
-      },
-      method: 'POST',
-    })
-      .then((_) => {
-        let gameIndex = this.#state.get('gameIndex');
-        let queueId = this.#state.get('queueId');
-
-        const gameCount = this.#state.get('gameCount');
-        const gameLength = this.#state.get('gameLength');
-        const activityProgressValue = ((gameIndex + 1) * 100) / gameLength;
-
-        this.#state.set('activityProgressValue', activityProgressValue);
-        this.#state.set('gameCount', gameCount + 1);
-
-        if (++gameIndex < gameLength) {
-          this.#state.set('gameCount', gameIndex);
-        } else {
-          if (++queueId < settings.queue.identifierMax) {
-            this.#state.set('queueId', queueId);
-            this.explore();
+    return new Promise((resolve, reject) => {
+      fetch(input, {
+        body: Helper.Host.serialize({
+          appid_to_clear_from_queue: gameId,
+          sessionid: g_sessionID,
+        }),
+        headers: {
+          'Content-Type':
+            'application/x-www-form-urlencoded;boundary=;charset=utf-8',
+        },
+        method: 'POST',
+      })
+        .then((response) => resolve(response))
+        .catch((reason) => {
+          rejectReason = reason;
+          willRetry = settings.app.retryOnFailedRequest;
+        })
+        .finally(() => {
+          let appRetry = this.#state.get(`appRetry${gameId}`);
+          if (willRetry && ++appRetry <= settings.app.retryMax) {
+            this.#state.set(`appRetry${gameId}`, appRetry);
+            this.app(gameId);
+          } else {
+            reject(rejectReason);
           }
-        }
-      })
-      .catch((_) => {
-        willRetry = settings.app.retryOnFailedRequest;
-      })
-      .finally(() => {
-        let appRetry = this.#state.get(`appRetry${gameId}`);
-
-        if (willRetry && ++appRetry <= settings.app.retryMax) {
-          this.#state.set(`appRetry${gameId}`, appRetry);
-          this.app(gameId);
-        }
-      });
+        });
+    });
   };
 
   explore = () => {
-    let willRetry = false;
     const input = Helper.Host.base('/explore/generatenewdiscoveryqueue');
+    let rejectReason = null;
+    let willRetry = false;
 
-    fetch(input, {
-      body: Helper.Host.serialize({
-        queuetype: 0,
-        sessionid: g_sessionID,
-      }),
-      headers: {
-        'Content-Type':
-          'application/x-www-form-urlencoded;boundary=;charset=utf-8',
-      },
-      method: 'POST',
+    return new Promise((resolve, reject) => {
+      fetch(input, {
+        body: Helper.Host.serialize({
+          queuetype: 0,
+          sessionid: g_sessionID,
+        }),
+        headers: {
+          'Content-Type':
+            'application/x-www-form-urlencoded;boundary=;charset=utf-8',
+        },
+        method: 'POST',
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (
+            !Object.prototype.hasOwnProperty.call(data, 'queue') ||
+            !Object.prototype.hasOwnProperty.call(data, 'rgAppData') ||
+            !Object.prototype.hasOwnProperty.call(data, 'settings')
+          ) {
+            willRetry = settings.explore.retryOnFailedResponse;
+            return;
+          }
+
+          resolve(data);
+        })
+        .catch((reason) => {
+          rejectReason = reason;
+          willRetry = settings.explore.retryOnFailedRequest;
+        })
+        .finally(() => {
+          let exploreRetry = this.#state.get('exploreRetry');
+          if (willRetry && ++exploreRetry <= settings.explore.retryMax) {
+            this.#state.set('exploreRetry', exploreRetry);
+            this.explore();
+          } else {
+            reject(rejectReason);
+          }
+        });
     })
-      .then((response) => response.json())
-      .then((data) => {
-        if (
-          Object.prototype.hasOwnProperty.call(data, 'queue') &&
-          Object.prototype.hasOwnProperty.call(data, 'rgAppData') &&
-          Object.prototype.hasOwnProperty.call(data, 'settings')
-        ) {
-          const gameLength = data.queue.length;
-          const queueId = this.#state.get('queueIndex');
-
-          this.#state.set('gameIndex', 0);
-          this.#state.set('gameLength', gameLength);
-          data.queue.forEach((gameId) => {
-            const rgAppDataItem = data.rgAppData[gameId];
-            const props = {
-              id: `sqde-game-${queueId}-${gameId}`,
-              gameId,
-              queueId,
-              discountBlock: rgAppDataItem.discount_block,
-              header: rgAppDataItem.header,
-              name: rgAppDataItem.name,
-              os_linux: rgAppDataItem.os_linux,
-              os_macos: rgAppDataItem.os_macos,
-              os_windows: rgAppDataItem.os_windows,
-              urlName: rgAppDataItem.url_name,
-            };
-
-            this.#state.set(`appRetry${gameId}`, 0);
-            this.#web.game(props);
-            this.app(gameId);
-          });
-        } else {
-          willRetry = settings.explore.retryOnFailedResponse;
-        }
-      })
-      .catch((_) => {
-        willRetry = settings.explore.retryOnFailedRequest;
-      })
-      .finally(() => {
-        let exploreRetry = this.#state.get('exploreRetry');
-        if (willRetry && ++exploreRetry <= settings.explore.retryMax) {
-          this.#state.set('exploreRetry', exploreRetry);
-          this.explore();
-        }
-      });
   };
 }
 
@@ -330,7 +262,7 @@ class Web {
     props.id = props.id ?? 'sqde-action';
 
     const listenerObject = {
-      handleActionClick: () => {
+      handleActionClick: async () => {
         Helper.Element.removeContent('#sqde-activity');
 
         this.#state.set('activityProgressValue', 0);
@@ -339,16 +271,60 @@ class Web {
         this.#state.set('queueId', 0);
 
         this.activity();
-        this.#connection.explore();
+        
+        const data = await this.#connection.explore();
+        const gameLength = exploreData.queue.length;
+
+        let queueId = this.#state.get('queueIndex');
+        this.#state.set('gameIndex', 0);
+        this.#state.set('gameLength', gameLength);
+
+        data.queue.forEach(async (gameId) => {
+          const rgAppDataItem = data.rgAppData[gameId];
+          const props = {
+            id: `sqde-game-${queueId}-${gameId}`,
+            gameId,
+            queueId,
+            discountBlock: rgAppDataItem.discount_block,
+            header: rgAppDataItem.header,
+            name: rgAppDataItem.name,
+            os_linux: rgAppDataItem.os_linux,
+            os_macos: rgAppDataItem.os_macos,
+            os_windows: rgAppDataItem.os_windows,
+            urlName: rgAppDataItem.url_name,
+          };
+          
+          this.#state.set(`appRetry${gameId}`, 0);
+          this.game(props);
+
+          await this.#connection.app(gameId);
+
+          let gameIndex = this.#state.get('gameIndex');
+          const gameCount = this.#state.get('gameCount');
+          const gameLength = this.#state.get('gameLength');
+
+          const activityProgressValue = ((gameIndex + 1) * 100) / gameLength;
+  
+          this.#state.set('activityProgressValue', activityProgressValue);
+          this.#state.set('gameCount', gameCount + 1);
+
+          if (++gameIndex < gameLength) {
+            this.#state.set('gameIndex', gameIndex);
+          } else {
+            if (++queueId < settings.queue.identifierMax) {
+              this.#state.set('queueId', queueId);
+              this.#connection.explore();
+            }
+          }
+        });
       },
     };
 
     const text = `
 <div id="${props.id}" class="discovery_queue_customize_ctn">
-  <div class="btnv6_blue_hoverfade btn_medium" ${this.#generateEvents([
-    'click',
-    'handleActionClick',
-  ])}>
+  <div class="btnv6_blue_hoverfade btn_medium" ${this.#generateEvents(
+    ['click', 'handleActionClick']
+  )}>
     <span>${this.#localization.format('exploreQueue')}</span>
   </div>
   <span> ${this.#localization.format('exploreQueueProduct')} </span>
@@ -394,11 +370,9 @@ class Web {
 
     const text = `
 <div id="${props.id}">
-  <div id="sqde-activity-status" ${this.#generateEvents([
-    'state',
-    'handleIsMaximizedState',
-    'isMaximized',
-  ])}>
+  <div id="sqde-activity-status" ${this.#generateEvents(
+    ['state', 'handleIsMaximizedState', 'isMaximized']
+  )}>
     <div class="info">
       <span>${this.#localization.format(
         'exploreGame'
@@ -408,18 +382,15 @@ class Web {
       'gameCount',
     ])}>${gameCount}</span></span>
     </div>
-    <a class="resize" href="#" title="Resize" ${this.#generateEvents([
-      'click',
-      'handleResizeClick',
-    ])}>
+    <a class="resize" href="#" title="Resize" ${this.#generateEvents(
+      ['click', 'handleResizeClick']
+    )}>
       <div class="expander">&nbsp;</div>
     </a>
   </div>
-  <div id="sqde-activity-content" ${this.#generateEvents([
-    'state',
-    'handleIsMaximizedState',
-    'isMaximized',
-  ])}></div>
+  <div id="sqde-activity-content" ${this.#generateEvents(
+    ['state', 'handleIsMaximizedState', 'isMaximized']
+  )}></div>
   <div id="sqde-activity-progress">
     <div class="value" style="width: ${activityProgressValue}%" ${this.#generateEvents(
       ['state', 'handleActivityProgressValueState', 'activityProgressValue']
@@ -500,13 +471,10 @@ class Web {
 }
 
 (() => {
-  const app = new App();
-
-  const localization = app.createLocalization();
-  const web = app.createWeb();
-
-  app.createConnection();
-  app.createState();
+  const localization = new Localization();
+  const state = new State();
+  const connection = new Connection(state);
+  const web = new Web(connection, localization, state);
 
   const selectedLanguage = Helper.Host.query(window.location.href, 'l');
   localization.use(selectedLanguage ?? 'english');
