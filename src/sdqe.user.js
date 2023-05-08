@@ -116,7 +116,7 @@ class Connection {
             reject(rejectReason);
           }
         });
-    })
+    });
   };
 }
 
@@ -271,9 +271,9 @@ class Web {
         this.#state.set('queueId', 0);
 
         this.activity();
-        
+
         const data = await this.#connection.explore();
-        const gameLength = exploreData.queue.length;
+        const gameLength = data.queue.length;
 
         let queueId = this.#state.get('queueIndex');
         this.#state.set('gameIndex', 0);
@@ -293,7 +293,7 @@ class Web {
             os_windows: rgAppDataItem.os_windows,
             urlName: rgAppDataItem.url_name,
           };
-          
+
           this.#state.set(`appRetry${gameId}`, 0);
           this.game(props);
 
@@ -304,7 +304,7 @@ class Web {
           const gameLength = this.#state.get('gameLength');
 
           const activityProgressValue = ((gameIndex + 1) * 100) / gameLength;
-  
+
           this.#state.set('activityProgressValue', activityProgressValue);
           this.#state.set('gameCount', gameCount + 1);
 
@@ -322,9 +322,10 @@ class Web {
 
     const text = `
 <div id="${props.id}" class="discovery_queue_customize_ctn">
-  <div class="btnv6_blue_hoverfade btn_medium" ${this.#generateEvents(
-    ['click', 'handleActionClick']
-  )}>
+  <div class="btnv6_blue_hoverfade btn_medium" ${this.#generateEvents([
+    'click',
+    'handleActionClick',
+  ])}>
     <span>${this.#localization.format('exploreQueue')}</span>
   </div>
   <span> ${this.#localization.format('exploreQueueProduct')} </span>
@@ -370,9 +371,11 @@ class Web {
 
     const text = `
 <div id="${props.id}">
-  <div id="sqde-activity-status" ${this.#generateEvents(
-    ['state', 'handleIsMaximizedState', 'isMaximized']
-  )}>
+  <div id="sqde-activity-status" ${this.#generateEvents([
+    'state',
+    'handleIsMaximizedState',
+    'isMaximized',
+  ])}>
     <div class="info">
       <span>${this.#localization.format(
         'exploreGame'
@@ -382,15 +385,18 @@ class Web {
       'gameCount',
     ])}>${gameCount}</span></span>
     </div>
-    <a class="resize" href="#" title="Resize" ${this.#generateEvents(
-      ['click', 'handleResizeClick']
-    )}>
+    <a class="resize" href="#" title="Resize" ${this.#generateEvents([
+      'click',
+      'handleResizeClick',
+    ])}>
       <div class="expander">&nbsp;</div>
     </a>
   </div>
-  <div id="sqde-activity-content" ${this.#generateEvents(
-    ['state', 'handleIsMaximizedState', 'isMaximized']
-  )}></div>
+  <div id="sqde-activity-content" ${this.#generateEvents([
+    'state',
+    'handleIsMaximizedState',
+    'isMaximized',
+  ])}></div>
   <div id="sqde-activity-progress">
     <div class="value" style="width: ${activityProgressValue}%" ${this.#generateEvents(
       ['state', 'handleActivityProgressValueState', 'activityProgressValue']
