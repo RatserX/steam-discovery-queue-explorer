@@ -72,6 +72,9 @@ module.exports = {
 
         return headersOption;
       },
+      proxyScript: {
+        filename: '[basename].proxy.user.js'
+      }
     }),
   ],
 };
