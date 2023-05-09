@@ -2,6 +2,8 @@ import Localization from '../../utils/localization';
 import State from '../../utils/state';
 import Connection from '../../connection/connection';
 import ElementHelper from '../../helpers/element-helper';
+import appSettings from '../../settings/app-settings';
+import App from '../app';
 
 export default (props = {}) => {
   props.id = props.id ?? 'sqde-action';
@@ -15,7 +17,7 @@ export default (props = {}) => {
       State.set('exploreRetry', 0);
       State.set('queueId', 0);
 
-      this.activity();
+      App.activity();
 
       const data = await Connection.explore();
       const gameLength = data.queue.length;
@@ -40,7 +42,7 @@ export default (props = {}) => {
         };
 
         State.set(`appRetry${gameId}`, 0);
-        this.game(props);
+        App.game(props);
 
         await Connection.app(gameId);
 
@@ -56,7 +58,7 @@ export default (props = {}) => {
         if (++gameIndex < gameLength) {
           State.set('gameIndex', gameIndex);
         } else {
-          if (++queueId < settings.queue.identifierMax) {
+          if (++queueId < appSettings.queue.identifierMax) {
             State.set('queueId', queueId);
             Connection.explore();
           }
@@ -68,9 +70,9 @@ export default (props = {}) => {
   const text = `
 <div id="${props.id}" class="discovery_queue_customize_ctn">
   <div class="btnv6_blue_hoverfade btn_medium" ${ElementHelper.generateEvents([
-      'click',
-      'handleActionClick',
-    ])}>
+    'click',
+    'handleActionClick',
+  ])}>
     <span>${Localization.format('Explore your queue')}</span>
   </div>
   <span> ${Localization.format('Explore the products in your queue')}. </span>

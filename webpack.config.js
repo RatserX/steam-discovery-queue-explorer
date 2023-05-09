@@ -15,23 +15,27 @@ module.exports = {
   mode: dev ? 'development' : 'production',
   module: {
     rules: [
-      {
-        test: /\.m?js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              [
-                '@babel/preset-env',
-                {
-                  targets: '> 0.25%, not dead',
+      ...(!dev
+        ? [
+            {
+              test: /\.m?js$/,
+              exclude: /node_modules/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: [
+                    [
+                      '@babel/preset-env',
+                      {
+                        targets: '> 0.25%, not dead',
+                      },
+                    ],
+                  ],
                 },
-              ],
-            ],
-          },
-        },
-      },
+              },
+            },
+          ]
+        : []),
     ],
   },
   output: {
@@ -56,7 +60,7 @@ module.exports = {
           downloadURL:
             'https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js',
           updateURL:
-            'https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.user.js',
+            'https://github.com/RatserX/steam-discovery-queue-explorer/raw/main/dist/sdqe.meta.js',
         };
 
         if (dev) {
