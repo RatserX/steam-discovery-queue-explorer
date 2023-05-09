@@ -4,13 +4,14 @@ const { UserscriptPlugin } = require('webpack-userscript');
 
 const dev = process.env.NODE_ENV === 'development';
 
+/** @typedef {import("webpack-userscript/dist/features").HeadersOption} HeadersOption */
 module.exports = {
   devServer: {
     static: {
       directory: path.join(__dirname, 'dist'),
     },
   },
-  entry: glob.sync('./src/*.js'),
+  entry: glob.sync('./src/**/*.js'),
   mode: dev ? 'development' : 'production',
   module: {
     rules: [
@@ -40,7 +41,7 @@ module.exports = {
   plugins: [
     new UserscriptPlugin({
       headers(original) {
-        /** @type {import('webpack-userscript/dist/features').HeadersOption} */
+        /** @type {HeadersOption} */
         const headersOption = {
           ...original,
           author: 'RatserX',
