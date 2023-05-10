@@ -1,6 +1,6 @@
 {
   "name": "steam-discovery-queue-explorer",
-  "version": "1.0.0",
+  "version": "6.0.0",
   "description": "Userscript that improves the overall experience of exploring the Steam Discovery Queue.",
   "main": "./src/main.js",
   "scripts": {
