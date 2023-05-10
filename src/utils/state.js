@@ -1,4 +1,4 @@
-import helpers from '../helpers/element-helper';
+import ElementHelper from "../helpers/element-helper";
 
 class State {
   static #storage = {};
@@ -8,7 +8,7 @@ class State {
     const currentValue = this.get(name);
     if (currentValue !== value) {
       this.#storage[name] = value;
-      helpers.Element.dispatchEvent('state', value, name);
+      ElementHelper.dispatchEvent('state', value, name);
     }
   };
 }
